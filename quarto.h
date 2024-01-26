@@ -1,3 +1,4 @@
+
 #include "enum.h"
 
 Quarto obterNovoQuarto();
