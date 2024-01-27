@@ -90,14 +90,14 @@ void obterNovaReserva(FILE *file) {
 
     fclose(fileCliente);
     fclose(fileQuarto);
+    fclose(file);
 }
 
-
 int excluirReserva(FILE *file, int numeroQuarto) {
-    FILE *tempFile = fopen("temp.dat", "wb");
+    FILE *tempFile = fopen("temp.bin", "wb");  // Corrigido para "temp.bin"
     char cpf[20];
-    printf("digite o numeor do cpf do cliente: ");
-    scanf("%s", &cpf);
+    printf("Digite o número do CPF do cliente: ");
+    scanf("%s", cpf);
     if (!tempFile) {
         printf("Erro ao abrir o arquivo temporário.\n");
         return 0;
@@ -110,7 +110,7 @@ int excluirReserva(FILE *file, int numeroQuarto) {
     int encontrado = 0;
 
     while (fread(&reserva, sizeof(Reserva), 1, file)) {
-        if (reserva.numeroQuarto == numeroQuarto) {
+        if (reserva.numeroQuarto == numeroQuarto && strcmp(reserva.cpfCliente, cpf)==0) {
             printf("Reserva excluída com sucesso.\n");
             encontrado = 1;
         } else {
@@ -127,6 +127,28 @@ int excluirReserva(FILE *file, int numeroQuarto) {
     return encontrado;
 }
 
+
+float calcularValorTotal(int numero, int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut){
+    Quarto quarto;
+    FILE *file = fopen("quarto.bin", "rb");
+    float total;
+    int encontrado = 0;
+    rewind(file);
+    total = quarto.preco * calcularDiferenca(diaIn, mesIn, anoIn, diaOut, mesOut, anoOut);
+    while (fread(&quarto, sizeof(Quarto), 1, file)) {
+        if (quarto.numero == numero) {
+            encontrado = 1;
+            
+            printf("Check-in realizado com sucesso.\n");
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Reserva não encontrada.\n");
+    }
+    return total;
+}
 void realizarCheckIn(FILE *file) {
     Reserva reserva;
     int numero;
@@ -190,7 +212,7 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
         if (reserva.numeroQuarto == numeroQuarto && strcmp(reserva.cpfCliente, cpf) == 0) {
             encontrado = 1;
             reserva.statusPagamento = Pago;
-            reserva.valorTotal = calcularValorTotal(reserva.diaIn, reserva.mesIn, reserva.anoIn, reserva.diaOut, reserva.mesOut, reserva.anoOut, reserva.anoOut);
+            reserva.valorTotal = calcularValorTotal(reserva.numeroQuarto, reserva.diaIn, reserva.mesIn, reserva.anoIn, reserva.diaOut, reserva.mesOut, reserva.anoOut);
             printf("Pagamento realizado com sucesso.\n");
             fseek(file, -sizeof(Reserva), SEEK_CUR);
             fwrite(&reserva, sizeof(Reserva), 1, file);
@@ -201,27 +223,6 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
     if (!encontrado) {
         printf("Reserva não encontrada.\n");
     }
-}
-float calcularValorTotal(int numero, int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut){
-    Quarto quarto;
-    FILE *file = fopen("quarto.bin", "wb");
-    float total;
-    int encontrado = 0;
-    rewind(file);
-    total = quarto.preco * calcularDiferenca(diaIn, mesIn, anoIn, diaOut, mesOut, anoOut);
-    while (fread(&quarto, sizeof(Quarto), 1, file)) {
-        if (quarto.numero == numero) {
-            encontrado = 1;
-            
-            printf("Check-in realizado com sucesso.\n");
-            break;
-        }
-    }
-
-    if (!encontrado) {
-        printf("Reserva não encontrada.\n");
-    }
-    return total;
 }
 
 void mudarStatusQuarto(FILE *file, int numeroQuarto, enum Status Status) {
