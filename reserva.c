@@ -9,10 +9,16 @@ int verificarNumero(FILE *file, int numero) {
     while (fread(&quarto, sizeof(Quarto), 1, file) == 1) {
         if(quarto.numero == numero) {
             printf("O número do Quarto informado consta no nosso registro de Quartos!\n");
+            if (quarto.status==Ocupado)
+            {
+                printf("o quarto escolhido está indisponivel no momento!");
+                return 0;
+            }
+            
             return 1;  // Número de quarto encontrado
         }
     }
-
+    printf("nenhum quarto está cadastrado com o numeor %d em nosso sistema. Tente novamente.\n", numero);
     return 0;  // Número de quarto não encontrado
 }
 
@@ -55,22 +61,29 @@ void obterNovaReserva(FILE *file) {
         scanf("%s", nova.cpfCliente);
     } while (!verificarCpf(fileCliente, nova.cpfCliente));
 
+    printf("digite a data de entrada no quarto: \n");
+    printf("dia de entrada:");
+    scanf("%d", &nova.diaIn);
+    printf("mes de entrada:");
+    scanf("%d", &nova.mesIn);
+    printf("ano de entrada:");
+    scanf("%d", &nova.anoIn);
+    printf("dia de saida:");
+    scanf("%d", &nova.diaOut);
+    printf("mes de saida:");
+    scanf("%d", &nova.mesOut);
+    printf("ano de saida:");
+    scanf("%d", &nova.anoOut);
     // Informações padrão
     nova.horaIn = 0;
     nova.minutoIn = 0;
-    nova.diaIn = 0;
-    nova.mesIn = 0;
-    nova.anoIn = 0;
     nova.horaOut = 0;
     nova.minutoOut = 0;
-    nova.diaOut = 0;
-    nova.mesOut = 0;
-    nova.anoOut = 0;
 
     // Status e valor padrão
     nova.statusPagamento = Pendente;
     nova.valorTotal = 0.0;
-
+    mudarStatusQuarto(fileQuarto, nova.numeroQuarto, Reservado);
     realizarReserva(file, nova);
 
     fclose(fileCliente);
@@ -113,12 +126,13 @@ int excluirReserva(FILE *file, int numeroQuarto) {
 void realizarCheckIn(FILE *file, int numeroQuarto) {
     Reserva reserva;
     int encontrado = 0;
-
+    FILE *fileQuarto = fopen("quarto.bin", "rb");
     rewind(file);
 
     while (fread(&reserva, sizeof(Reserva), 1, file)) {
         if (reserva.numeroQuarto == numeroQuarto) {
             encontrado = 1;
+            mudarStatusQuarto(fileQuarto, reserva.numeroQuarto, Ocupado);
             // Lógica para realizar o check-in, se necessário
             printf("Check-in realizado com sucesso.\n");
             break;
@@ -144,6 +158,29 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
             printf("Pagamento realizado com sucesso.\n");
             fseek(file, -sizeof(Reserva), SEEK_CUR);
             fwrite(&reserva, sizeof(Reserva), 1, file);
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Reserva não encontrada.\n");
+    }
+}
+
+void mudarStatusQuarto(FILE *file, int numeroQuarto, enum Status Status) {
+    Quarto quarto;
+    int encontrado = 0;
+
+    rewind(file);
+
+    while (fread(&quarto, sizeof(Quarto), 1, file)) {
+        if (quarto.numero == numeroQuarto) {
+            encontrado = 1;
+            // Lógica para realizar o pagamento, se necessário
+            quarto.status = Status;
+            printf("Pagamento realizado com sucesso.\n");
+            fseek(file, -sizeof(Quarto), SEEK_CUR);
+            fwrite(&quarto, sizeof(Quarto), 1, file);
             break;
         }
     }
@@ -188,6 +225,36 @@ float calcularValoresRecebidos(FILE *file) {
 
     return valoresRecebidos;
 }
+#include <stdio.h>
+#include <time.h>
+
+int calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut) {
+   struct tm datain = {0}; // data inicial
+   struct tm dataOut = {0}; // data final
+   
+   // preenche as datas
+   datain.tm_year =  anoIn - 1900; // ano - 1900
+   datain.tm_mon = mesIn; // mês (0-11)
+   datain.tm_mday = diaIn; // dia
+   dataOut.tm_year = anoOut - 1900;
+   dataOut.tm_mon = mesOut;
+   dataOut.tm_mday = diaOut;
+   
+   // converte as datas para segundos
+   time_t segundos1 = mktime(&datain);
+   time_t segundos2 = mktime(&dataOut);
+   
+   // calcula a diferença em segundos
+   double diferenca = difftime(segundos2, segundos1);
+   
+   // converte a diferença em dias
+   int dias = diferenca / 86400;
+   
+   printf("A diferença entre as datas é de %d dias.\n", dias);
+   
+   return 0;
+}
+
 
 int main() {
     FILE *file = fopen("reserva.bin", "ab+");
