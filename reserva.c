@@ -74,8 +74,10 @@ void obterNovaReserva(FILE *file) {
     scanf("%d", &nova.mesOut);
     printf("ano de saida:");
     scanf("%d", &nova.anoOut);
-    // Informações padrão
-    nova.horaIn = 0;
+    printf("hora de entrada:");
+    scanf("%d", &nova.horaIn);
+    printf("minuto de entrada:");
+    scanf("%d", &nova.anoOut);
     nova.minutoIn = 0;
     nova.horaOut = 0;
     nova.minutoOut = 0;
@@ -93,7 +95,9 @@ void obterNovaReserva(FILE *file) {
 
 int excluirReserva(FILE *file, int numeroQuarto) {
     FILE *tempFile = fopen("temp.dat", "wb");
-
+    char cpf[20];
+    printf("digite o numeor do cpf do cliente: ");
+    scanf("%s", &cpf);
     if (!tempFile) {
         printf("Erro ao abrir o arquivo temporário.\n");
         return 0;
@@ -123,14 +127,17 @@ int excluirReserva(FILE *file, int numeroQuarto) {
     return encontrado;
 }
 
-void realizarCheckIn(FILE *file, int numeroQuarto) {
+void realizarCheckIn(FILE *file) {
     Reserva reserva;
+    int numero;
+    printf("digite o numero do quarto para realizar o checkIn: ");
+    scanf("%d", &numero);
     int encontrado = 0;
     FILE *fileQuarto = fopen("quarto.bin", "rb");
     rewind(file);
 
     while (fread(&reserva, sizeof(Reserva), 1, file)) {
-        if (reserva.numeroQuarto == numeroQuarto) {
+        if (reserva.numeroQuarto == numero) {
             encontrado = 1;
             mudarStatusQuarto(fileQuarto, reserva.numeroQuarto, Ocupado);
             // Lógica para realizar o check-in, se necessário
@@ -142,19 +149,48 @@ void realizarCheckIn(FILE *file, int numeroQuarto) {
     if (!encontrado) {
         printf("Reserva não encontrada.\n");
     }
+    fclose(fileQuarto);
 }
-
-void realizarPagamento(FILE *file, int numeroQuarto) {
+void realizarCheckOut(FILE *file) {
     Reserva reserva;
+    FILE *fileQuarto = fopen("quarto.bin", "wb");
+    int numero;
+    printf("digite o numero do quarto para realizar o checkOut: ");
     int encontrado = 0;
-
     rewind(file);
 
     while (fread(&reserva, sizeof(Reserva), 1, file)) {
-        if (reserva.numeroQuarto == numeroQuarto) {
+        if (reserva.numeroQuarto == numero) {
             encontrado = 1;
-            // Lógica para realizar o pagamento, se necessário
+            mudarStatusQuarto(fileQuarto, reserva.numeroQuarto, Livre);
+            RegistraHoraSaida(file, reserva.numeroQuarto);
+            printf("Check-in realizado com sucesso.\n");
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Reserva não encontrada.\n");
+    }
+    fclose(fileQuarto);
+}
+void realizarPagamento(FILE *file, int numeroQuarto) {
+    Reserva reserva;
+    int encontrado = 0;
+    char cpf[20];
+    do
+    {
+    printf("digite o cpf do cliente: ");
+    scanf("%s", &cpf); 
+    } while (!verificarCpf);
+    
+    rewind(file);
+
+    while (fread(&reserva, sizeof(Reserva), 1, file)) {
+        if (reserva.numeroQuarto == numeroQuarto && strcmp(reserva.cpfCliente, cpf) == 0) {
+            encontrado = 1;
             reserva.statusPagamento = Pago;
+            reserva.valorTotal = calcularValorTotal(reserva.diaIn, reserva.mesIn, reserva.anoIn, reserva.diaOut, reserva.mesOut, reserva.anoOut, reserva.anoOut);
             printf("Pagamento realizado com sucesso.\n");
             fseek(file, -sizeof(Reserva), SEEK_CUR);
             fwrite(&reserva, sizeof(Reserva), 1, file);
@@ -165,6 +201,27 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
     if (!encontrado) {
         printf("Reserva não encontrada.\n");
     }
+}
+float calcularValorTotal(int numero, int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut){
+    Quarto quarto;
+    FILE *file = fopen("quarto.bin", "wb");
+    float total;
+    int encontrado = 0;
+    rewind(file);
+    total = quarto.preco * calcularDiferenca(diaIn, mesIn, anoIn, diaOut, mesOut, anoOut);
+    while (fread(&quarto, sizeof(Quarto), 1, file)) {
+        if (quarto.numero == numero) {
+            encontrado = 1;
+            
+            printf("Check-in realizado com sucesso.\n");
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Reserva não encontrada.\n");
+    }
+    return total;
 }
 
 void mudarStatusQuarto(FILE *file, int numeroQuarto, enum Status Status) {
@@ -178,9 +235,32 @@ void mudarStatusQuarto(FILE *file, int numeroQuarto, enum Status Status) {
             encontrado = 1;
             // Lógica para realizar o pagamento, se necessário
             quarto.status = Status;
-            printf("Pagamento realizado com sucesso.\n");
             fseek(file, -sizeof(Quarto), SEEK_CUR);
             fwrite(&quarto, sizeof(Quarto), 1, file);
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Reserva não encontrada.\n");
+    }
+}
+void RegistraHoraSaida(FILE *file, int numeroQuarto) {
+    Reserva reserva;
+    int encontrado = 0;
+
+    rewind(file);
+
+    while (fread(&reserva, sizeof(Quarto), 1, file)) {
+        if (reserva.numeroQuarto == numeroQuarto) {
+            encontrado = 1;
+            // Lógica para realizar o pagamento, se necessário
+            printf("digite a hora de saida: ");
+            scanf("%d", &reserva.horaOut);
+            printf("digite o minuto de saida: ");
+            scanf("%d", &reserva.minutoOut);
+            fseek(file, -sizeof(Quarto), SEEK_CUR);
+            fwrite(&reserva, sizeof(Quarto), 1, file);
             break;
         }
     }
@@ -250,9 +330,7 @@ int calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, i
    // converte a diferença em dias
    int dias = diferenca / 86400;
    
-   printf("A diferença entre as datas é de %d dias.\n", dias);
-   
-   return 0;
+   return dias;
 }
 
 
@@ -296,10 +374,7 @@ int main() {
                 break;
             }
             case 3: {
-                int numeroQuartoCheckIn;
-                printf("Digite o número do quarto para realizar o check-in: ");
-                scanf("%d", &numeroQuartoCheckIn);
-                realizarCheckIn(file, numeroQuartoCheckIn);
+                realizarCheckIn(file);
                 break;
             }
             case 4: {
