@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include "Quarto.h"
 
@@ -35,12 +36,13 @@ void cadastrarQuarto(FILE *file, Quarto quarto) {
 
 void listarQuartos(FILE *file) {
     Quarto quarto;
-
+    int i = 0;
     rewind(file);  // Posiciona o ponteiro no início do arquivo
 
     printf("Lista de Quartos:\n");
 
     while (fread(&quarto, sizeof(Quarto), 1, file)) {
+        printf("[%d] - Indice\n", i);
         printf("Número: %d\n", quarto.numero);
         printf("Preço: %.2f\n", quarto.preco);
 
@@ -72,10 +74,11 @@ void listarQuartos(FILE *file) {
             default:
                 printf("Desconhecido\n");
         }
-
+            i++;
         printf("\n");
     }
-}int apagarQuartoPorNumero(FILE *file, int numero) {
+}
+int apagarQuartoPorNumero(FILE *file, int numero) {
     FILE *tempFile = fopen("temp.bin", "wb");
 
     if (!tempFile) {
@@ -114,92 +117,65 @@ void listarQuartos(FILE *file) {
 
 
 void atualizarStatusQuarto(FILE *file) {
-    int numero;
-    printf("Digite o número do quarto que deseja atualizar: ");
-    scanf("%d", &numero);
+    int indice;
+    fclose(file);
+    file = fopen("quarto.bin", "r+b");
+    listarQuartos(file);
+
+    printf("Digite o indice do quarto que deseja atualizar: ");
+    scanf("%d", &indice);
 
     Quarto quarto;
-    int encontrado = 0;
 
-    rewind(file);  // Posiciona o ponteiro no início do arquivo
+    // Posiciona o ponteiro de arquivo no registro desejado
+    fseek(file, indice * sizeof(Quarto), SEEK_SET);
+    
+    // Lê as informações do quarto do arquivo
+    fread(&quarto, sizeof(Quarto), 1, file);
 
-    while (fread(&quarto, sizeof(Quarto), 1, file)) {
-        if (quarto.numero == numero) {
-            encontrado = 1;
+    printf("Número: %d\n", quarto.numero);
+    printf("Preço: %.2f\n", quarto.preco);
+
+    // Restante da impressão ...
+
+    // Menu para escolher o novo status
+    printf("\nEscolha o novo status:\n");
+    printf("1 - Livre\n");
+    printf("2 - Ocupado\n");
+    printf("3 - Reservado\n");
+
+    int opcaoStatus;
+    scanf("%d", &opcaoStatus);
+
+    switch (opcaoStatus) {
+        case 1:
+            quarto.status = Livre;
             break;
-        }
+        case 2:
+            quarto.status = Ocupado;
+            break;
+        case 3:
+            quarto.status = Reservado;
+            break;
+        default:
+            printf("Opção inválida. O status permanecerá inalterado.\n");
     }
 
-    if (encontrado) {
-        printf("Quarto encontrado:\n");
-        printf("Número: %d\n", quarto.numero);
-        printf("Preço: %.2f\n", quarto.preco);
+    // Posiciona o ponteiro de arquivo no início do registro a ser atualizado
+    fseek(file, indice * sizeof(Quarto), SEEK_SET);
 
-        switch (quarto.tipoQuarto) {
-            case Simples:
-                printf("Tipo: Simples\n");
-                break;
-            case Duplo:
-                printf("Tipo: Duplo\n");
-                break;
-            case Suite:
-                printf("Tipo: Suite\n");
-                break;
-            default:
-                printf("Tipo: Desconhecido\n");
-        }
-
-        printf("Status atual: ");
-        switch (quarto.status) {
-            case Livre:
-                printf("Livre\n");
-                break;
-            case Ocupado:
-                printf("Ocupado\n");
-                break;
-            case Reservado:
-                printf("Reservado\n");
-                break;
-            default:
-                printf("Desconhecido\n");
-        }
-
-        // Menu para escolher o novo status
-        printf("\nEscolha o novo status:\n");
-        printf("1 - Livre\n");
-        printf("2 - Ocupado\n");
-        printf("3 - Reservado\n");
-
-        int opcaoStatus;
-        scanf("%d", &opcaoStatus);
-
-        switch (opcaoStatus) {
-            case 1:
-                quarto.status = Livre;
-                break;
-            case 2:
-                quarto.status = Ocupado;
-                break;
-            case 3:
-                quarto.status = Reservado;
-                break;
-            default:
-                printf("Opção inválida. O status permanecerá inalterado.\n");
-        }
-
-        // Atualizar o registro no arquivo
-        fseek(file, -sizeof(Quarto), SEEK_CUR);  // Volta para a posição antes da leitura do último registro
-        fwrite(&quarto, sizeof(Quarto), 1, file);
-        printf("Status atualizado com sucesso.\n");
-    } else {
-        printf("Quarto não encontrado.\n");
-    }
+    // Escreve as informações atualizadas de volta no arquivo
+    fwrite(&quarto, sizeof(Quarto), 1, file);
+    fclose(file);
+    file = fopen("quarto.bin", "ab+");
+    printf("Status atualizado com sucesso.\n");
 }
+
     
  
 int main() {
-    FILE *file = fopen("quarto.bin", "ab+");  // Abre ou cria o arquivo para leitura e escrita binária
-
+    FILE *file = fopen("quarto.bin", "a+b");  // Abre ou cria o arquivo para leitura e escrita binária
+    
     if (!file) {
         printf("Erro ao abrir o arquivo.\n");
         return 1;
@@ -250,7 +226,7 @@ int main() {
 
     } while (opcao != 0);
 
-    fclose(file);  // Fecha o arquivo
+    fclose(file); 
 
     return 0;
 }
