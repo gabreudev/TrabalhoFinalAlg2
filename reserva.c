@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include "enum.h"
 
+double calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut);
+
+
 int verificarNumero(FILE *file, int numero) {
     Quarto quarto;
     rewind(file);
@@ -124,10 +127,10 @@ int excluirReserva(FILE *file, int numeroQuarto) {
 }
 
 
-float calcularValorTotal(int numero, int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut){
+double calcularValorTotal(int numero, int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut){
     Quarto quarto;
     FILE *file = fopen("quarto.bin", "rb");
-    float total;
+    double total;
     int encontrado = 0;
     rewind(file);
     total = quarto.preco * calcularDiferenca(diaIn, mesIn, anoIn, diaOut, mesOut, anoOut);
@@ -147,11 +150,12 @@ float calcularValorTotal(int numero, int diaIn, int mesIn, int anoIn, int diaOut
 }
 void realizarCheckIn(FILE *file) {
     Reserva reserva;
+
     int numero;
     printf("digite o numero do quarto para realizar o checkIn: ");
     scanf("%d", &numero);
     int encontrado = 0;
-    FILE *fileQuarto = fopen("quarto.bin", "rb");
+    FILE *fileQuarto = fopen("quarto.bin", "r+b");
     rewind(file);
 
     while (fread(&reserva, sizeof(Reserva), 1, file)) {
@@ -171,7 +175,7 @@ void realizarCheckIn(FILE *file) {
 }
 void realizarCheckOut(FILE *file) {
     Reserva reserva;
-    FILE *fileQuarto = fopen("quarto.bin", "wb");
+    FILE *fileQuarto = fopen("quarto.bin", "r+b");
     int numero;
     printf("digite o numero do quarto para realizar o checkOut: ");
     scanf("%d", &numero);
@@ -183,7 +187,7 @@ void realizarCheckOut(FILE *file) {
             encontrado = 1;
             mudarStatusQuarto(fileQuarto, reserva.numeroQuarto, Livre);
             RegistraHoraSaida(file, reserva.numeroQuarto);
-            printf("Check-in realizado com sucesso.\n");
+            printf("Check-out realizado com sucesso.\n");
             break;
         }
     }
@@ -195,6 +199,8 @@ void realizarCheckOut(FILE *file) {
 }
 void realizarPagamento(FILE *file, int numeroQuarto) {
     Reserva reserva;
+    fclose(file);
+    fopen("reserva.bin", "r+b");
     int encontrado = 0;
     char cpf[20];
     do
@@ -220,23 +226,26 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
     if (!encontrado) {
         printf("Reserva não encontrada.\n");
     }
+        fclose(file);
+        file = fopen("reserva.bin", "ab+");
 }
 
-void mudarStatusQuarto(FILE *file, int numeroQuarto, enum Status Status) {
+void mudarStatusQuarto(FILE *file, int numeroQuarto, enum Status status) {
     Quarto quarto;
     int encontrado = 0;
 
     rewind(file);
 
     while (fread(&quarto, sizeof(Quarto), 1, file)) {
+        int indice=0;
         if (quarto.numero == numeroQuarto) {
             encontrado = 1;
-            // Lógica para realizar o pagamento, se necessário
-            quarto.status = Status;
-            fseek(file, -sizeof(Quarto), SEEK_CUR);
+            quarto.status = status;
+            fseek(file, indice * sizeof(Quarto), SEEK_SET);
             fwrite(&quarto, sizeof(Quarto), 1, file);
             break;
         }
+        indice++;
     }
 
     if (!encontrado) {
@@ -305,7 +314,7 @@ float calcularValoresRecebidos(FILE *file) {
 #include <stdio.h>
 #include <time.h>
 
-float calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut) {
+double calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut) {
    struct tm datain = {0}; // data inicial
    struct tm dataOut = {0}; // data final
    
@@ -325,7 +334,7 @@ float calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut,
    double diferenca = difftime(segundos2, segundos1);
    
    // converte a diferença em dias
-   float dias = diferenca / 86400;
+   double dias = diferenca / 86400;
    
    return dias;
 }
@@ -392,6 +401,7 @@ int main() {
             }
             case 7:{
                 realizarCheckOut(file);
+                break;
             }
             case 0:
                 printf("Saindo do programa.\n");

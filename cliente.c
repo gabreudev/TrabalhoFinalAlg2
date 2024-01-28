@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "cliente.h"
 
 Cliente obterNovoCliente() {
@@ -33,12 +34,13 @@ void cadastrarCliente(FILE *file, Cliente cliente) {
 
 void listarClientes(FILE *file) {
     Cliente cliente;
-
+    int indice=0;
     rewind(file);  // Posiciona o ponteiro no início do arquivo
 
     printf("Lista de Clientes:\n");
 
     while (fread(&cliente, sizeof(Cliente), 1, file) == 1) {
+        printf("indice: [%d]\n", indice);
         printf("Nome: %s\n", cliente.nome);
         printf("CPF: %s\n", cliente.cpf);
         printf("RG: %s\n", cliente.rg);
@@ -46,6 +48,7 @@ void listarClientes(FILE *file) {
         printf("Endereço: %s\n", cliente.endereco);
         printf("E-mail: %s\n", cliente.email);
         printf("\n");
+        indice++;
     }
 }
 
@@ -82,21 +85,21 @@ int apagarClientePorCpf(FILE *file, char cpf[]) {
 }
 
 void atualizarCliente(FILE *file) {
+    
+    listarClientes(file);
+    fclose(file);
+    file = fopen("cliente.bin", "r+b");
     char cpf[15];
-    printf("Digite o CPF do cliente que deseja atualizar: ");
-    scanf("%s", cpf);
-
+    
+    int indice;
+    printf("Digite o indice do cliente que deseja atualizar: ");
+    scanf("%d", &indice);
+    fseek(file, indice*sizeof(Cliente), SEEK_SET);
     Cliente cliente;
     int encontrado = 0;
-
-    rewind(file);  // Posiciona o ponteiro no início do arquivo
-
-    while (fread(&cliente, sizeof(Cliente), 1, file)) {
-        if (strcmp(cliente.cpf, cpf) == 0) {
-            encontrado = 1;
-            break;
-        }
-    }
+    
+             encontrado = 1;
+       
 
     if (encontrado) {
         printf("Cliente encontrado:\n");
@@ -144,9 +147,13 @@ void atualizarCliente(FILE *file) {
         }
 
         // Atualizar o registro no arquivo
-        fseek(file, -sizeof(Cliente), SEEK_CUR);  // Volta para a posição antes da leitura do último registro
+          // Volta para a posição antes da leitura do último registro
         fwrite(&cliente, sizeof(Cliente), 1, file);
         printf("Informação atualizada com sucesso.\n");
+
+        fclose(file);
+        file = fopen("cliente.bin", "ab+");
+    
     } else {
         printf("Cliente não encontrado.\n");
     }

@@ -46,6 +46,6 @@ typedef struct{
     int diaOut;
     int mesOut;
     int anoOut;
-    float valorTotal;
+    double valorTotal;
     enum StatusPagamento statusPagamento;
 } Reserva;
