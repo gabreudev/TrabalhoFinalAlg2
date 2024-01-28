@@ -3,6 +3,7 @@
 #include <string.h>
 #include "cliente.h"
 
+
 Cliente obterNovoCliente() {
     Cliente novo;
 
@@ -49,6 +50,7 @@ void listarClientes(FILE *file) {
         printf("E-mail: %s\n", cliente.email);
         printf("\n");
         indice++;
+        
     }
 }
 
@@ -89,18 +91,16 @@ void atualizarCliente(FILE *file) {
     listarClientes(file);
     fclose(file);
     file = fopen("cliente.bin", "r+b");
-    char cpf[15];
+    Cliente cliente;
     
     int indice;
     printf("Digite o indice do cliente que deseja atualizar: ");
     scanf("%d", &indice);
     fseek(file, indice*sizeof(Cliente), SEEK_SET);
-    Cliente cliente;
-    int encontrado = 0;
+    fread(&cliente, sizeof(Cliente), 1, file);
     
-             encontrado = 1;
-       
-
+    
+    int encontrado = 1;
     if (encontrado) {
         printf("Cliente encontrado:\n");
         printf("Nome: %s\n", cliente.nome);
@@ -111,41 +111,27 @@ void atualizarCliente(FILE *file) {
         printf("E-mail: %s\n", cliente.email);
 
         // Menu para escolher o que deseja atualizar
-        printf("\nEscolha o que deseja atualizar:\n");
-        printf("1 - Nome\n");
-        printf("2 - RG\n");
-        printf("3 - Telefone\n");
-        printf("4 - Endereço\n");
-        printf("5 - E-mail\n");
-
-        int opcaoAtualizacao;
-        scanf("%d", &opcaoAtualizacao);
-
-        switch (opcaoAtualizacao) {
-            case 1:
-                printf("Digite o novo nome: ");
+        printf("\n modifique o usuario:\n");
+        
+        
+                printf("Digite o novo nome: \n");
                 scanf("%s", cliente.nome);
-                break;
-            case 2:
-                printf("Digite o novo RG: ");
-                scanf("%s", cliente.rg);
-                break;
-            case 3:
-                printf("Digite o novo telefone: ");
-                scanf("%s", cliente.telefone);
-                break;
-            case 4:
-                printf("Digite o novo endereço: ");
-                scanf("%s", cliente.endereco);
-                break;
-            case 5:
-                printf("Digite o novo e-mail: ");
-                scanf("%s", cliente.email);
-                break;
-            default:
-                printf("Opção inválida. Nenhuma alteração realizada.\n");
-        }
+         
+                printf("Digite o novo CPF: \n");
+                scanf("%s", cliente.cpf);
 
+                printf("Digite o novo RG: \n");
+                scanf("%s", cliente.rg);
+         
+                printf("Digite o novo telefone: \n");
+                scanf("%s", cliente.telefone);
+         
+                printf("Digite o novo endereço: \n");
+                scanf("%s", cliente.endereco);
+         
+                printf("Digite o novo e-mail: \n");
+                scanf("%s", cliente.email);
+         
         // Atualizar o registro no arquivo
           // Volta para a posição antes da leitura do último registro
         fwrite(&cliente, sizeof(Cliente), 1, file);

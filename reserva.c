@@ -287,7 +287,14 @@ void consultarReservas(FILE *file) {
     while (fread(&reserva, sizeof(Reserva), 1, file)) {
         printf("Número do Quarto: %d\n", reserva.numeroQuarto);
         printf("CPF do Cliente: %s\n", reserva.cpfCliente);
+        printf("data de entrada: %d/%d/%d\n as %d:%d", reserva.diaIn,reserva.mesIn, reserva.anoIn, reserva.horaIn, reserva.minutoIn);
+        if (reserva.diaOut!=0)
+        {
+        printf("data de saida: %d/%d/%d as %d:%d\n", reserva.diaOut,reserva.mesOut, reserva.anoOut, reserva.horaOut, reserva.horaOut);
+        }
+        
         printf("Status do Pagamento: ");
+
     if (reserva.statusPagamento == Pendente) {
         printf("Pendente\n");
     } else {
