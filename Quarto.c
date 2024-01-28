@@ -75,10 +75,8 @@ void listarQuartos(FILE *file) {
 
         printf("\n");
     }
-}
-
-int apagarQuartoPorNumero(FILE *file, int numero) {
-    FILE *tempFile = fopen("temp.bin", "wb");  // Arquivo temporário para reescrever os quartos excluindo o desejado
+}int apagarQuartoPorNumero(FILE *file, int numero) {
+    FILE *tempFile = fopen("temp.bin", "wb");
 
     if (!tempFile) {
         printf("Erro ao abrir o arquivo temporário.\n");
@@ -86,28 +84,34 @@ int apagarQuartoPorNumero(FILE *file, int numero) {
     }
 
     Quarto quarto;
+    long posicaoAtual;
 
-    rewind(file);  // Posiciona o ponteiro no início do arquivo
+    rewind(file);
 
     int encontrado = 0;
 
     while (fread(&quarto, sizeof(Quarto), 1, file)) {
+        posicaoAtual = ftell(file);  // Salva a posição atual do ponteiro de arquivo
+
         if (quarto.numero == numero) {
             printf("Quarto encontrado e apagado.\n");
             encontrado = 1;
         } else {
             fwrite(&quarto, sizeof(Quarto), 1, tempFile);
         }
+
+        fseek(file, posicaoAtual, SEEK_SET);  // Reposiciona o ponteiro após a leitura
     }
 
     fclose(file);
     fclose(tempFile);
 
-    remove("quarto.bin");       // Remove o arquivo original
-    rename("temp.bin", "quarto.bin");  // Renomeia o arquivo temporário para o original
+    remove("quarto.bin");
+    rename("temp.bin", "quarto.bin");
 
     return encontrado;
 }
+
 
 void atualizarStatusQuarto(FILE *file) {
     int numero;

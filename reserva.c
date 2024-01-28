@@ -69,15 +69,11 @@ void obterNovaReserva(FILE *file) {
     printf("ano de entrada:");
     scanf("%d", &nova.anoIn);
     printf("dia de saida:");
-    scanf("%d", &nova.diaOut);
-    printf("mes de saida:");
-    scanf("%d", &nova.mesOut);
-    printf("ano de saida:");
-    scanf("%d", &nova.anoOut);
+    
     printf("hora de entrada:");
     scanf("%d", &nova.horaIn);
     printf("minuto de entrada:");
-    scanf("%d", &nova.anoOut);
+    scanf("%d", &nova.minutoIn);
     nova.minutoIn = 0;
     nova.horaOut = 0;
     nova.minutoOut = 0;
@@ -178,6 +174,7 @@ void realizarCheckOut(FILE *file) {
     FILE *fileQuarto = fopen("quarto.bin", "wb");
     int numero;
     printf("digite o numero do quarto para realizar o checkOut: ");
+    scanf("%d", &numero);
     int encontrado = 0;
     rewind(file);
 
@@ -213,7 +210,7 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
             encontrado = 1;
             reserva.statusPagamento = Pago;
             reserva.valorTotal = calcularValorTotal(reserva.numeroQuarto, reserva.diaIn, reserva.mesIn, reserva.anoIn, reserva.diaOut, reserva.mesOut, reserva.anoOut);
-            printf("Pagamento realizado com sucesso.\n");
+            printf("Pagamento  no valor de %.2f realizado com sucesso.\n", reserva.valorTotal);
             fseek(file, -sizeof(Reserva), SEEK_CUR);
             fwrite(&reserva, sizeof(Reserva), 1, file);
             break;
@@ -281,7 +278,6 @@ void consultarReservas(FILE *file) {
     while (fread(&reserva, sizeof(Reserva), 1, file)) {
         printf("Número do Quarto: %d\n", reserva.numeroQuarto);
         printf("CPF do Cliente: %s\n", reserva.cpfCliente);
-        // Exibir outras informações conforme necessário
         printf("Status do Pagamento: ");
     if (reserva.statusPagamento == Pendente) {
         printf("Pendente\n");
@@ -309,7 +305,7 @@ float calcularValoresRecebidos(FILE *file) {
 #include <stdio.h>
 #include <time.h>
 
-int calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut) {
+float calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut) {
    struct tm datain = {0}; // data inicial
    struct tm dataOut = {0}; // data final
    
@@ -329,7 +325,7 @@ int calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, i
    double diferenca = difftime(segundos2, segundos1);
    
    // converte a diferença em dias
-   int dias = diferenca / 86400;
+   float dias = diferenca / 86400;
    
    return dias;
 }
@@ -353,6 +349,7 @@ int main() {
         printf("4 - Realizar Pagamento\n");
         printf("5 - Consultar Reservas\n");
         printf("6 - Consultar Valores Recebidos\n");
+        printf("7 - Realizar Check-Out\n");
         printf("0 - Sair\n");
         printf("Escolha uma opção: ");
         scanf("%d", &opcao);
@@ -392,6 +389,9 @@ int main() {
                 float valoresRecebidos = calcularValoresRecebidos(file);
                 printf("Valores Recebidos: %.2f\n", valoresRecebidos);
                 break;
+            }
+            case 7:{
+                realizarCheckOut(file);
             }
             case 0:
                 printf("Saindo do programa.\n");
