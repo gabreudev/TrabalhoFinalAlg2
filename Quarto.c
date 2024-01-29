@@ -1,6 +1,8 @@
-#include <stdlib.h>
-#include <stdio.h>
+
 #include "Quarto.h"
+
+
+
 
 Quarto obterNovoQuarto() {
     Quarto novo;
@@ -173,7 +175,7 @@ void atualizarStatusQuarto(FILE *file) {
 
     
  
-int main() {
+int menuQuarto() {
     FILE *file = fopen("quarto.bin", "a+b");  // Abre ou cria o arquivo para leitura e escrita binária
     
     if (!file) {

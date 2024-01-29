@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+
 #include "enum.h"
 
 double calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut);
@@ -347,7 +346,7 @@ double calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut
 }
 
 
-int main() {
+int menuReserva() {
     FILE *file = fopen("reserva.bin", "ab+");
 
     if (!file) {

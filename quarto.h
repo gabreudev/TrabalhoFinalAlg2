@@ -10,3 +10,5 @@ void listarQuartos(FILE *file);
 int apagarQuartoPorNumero(FILE *file, int numero);
 
 void atualizarStatusQuarto(FILE *file);
+
+int menuQuarto();

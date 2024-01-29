@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "cliente.h"
-
+#include "enum.h"
 
 Cliente obterNovoCliente() {
     Cliente novo;
@@ -50,7 +46,6 @@ void listarClientes(FILE *file) {
         printf("E-mail: %s\n", cliente.email);
         printf("\n");
         indice++;
-        
     }
 }
 
@@ -88,36 +83,39 @@ int apagarClientePorCpf(FILE *file, char cpf[]) {
 
 void atualizarCliente(FILE *file) {
     
+    
+
     listarClientes(file);
     fclose(file);
     file = fopen("cliente.bin", "r+b");
-    Cliente cliente;
+    char cpf[15];
     
     int indice;
     printf("Digite o indice do cliente que deseja atualizar: ");
     scanf("%d", &indice);
     fseek(file, indice*sizeof(Cliente), SEEK_SET);
-    fread(&cliente, sizeof(Cliente), 1, file);
+    //fread(&aux, sizeof(Cliente), 1, file);   
+    int encontrado = 0;
     
-    
-    int encontrado = 1;
-    if (encontrado) {
-        printf("Cliente encontrado:\n");
-        printf("Nome: %s\n", cliente.nome);
-        printf("CPF: %s\n", cliente.cpf);
-        printf("RG: %s\n", cliente.rg);
-        printf("Telefone: %s\n", cliente.telefone);
-        printf("Endereço: %s\n", cliente.endereco);
-        printf("E-mail: %s\n", cliente.email);
+             encontrado = 1; 
 
-        // Menu para escolher o que deseja atualizar
+    if (encontrado) {
+        // printf("Cliente encontrado:\n");
+        // printf("Nome: %s\n", aux.nome);
+        // printf("CPF: %s\n", aux.cpf);
+        // printf("RG: %s\n", aux.rg);
+        // printf("Telefone: %s\n", aux.telefone);
+        // printf("Endereço: %s\n", aux.endereco);
+        // printf("E-mail: %s\n", aux.email);
+         Cliente cliente;
+        // Menu para escolher o que deseja atualizar4
         printf("\n modifique o usuario:\n");
         
         
                 printf("Digite o novo nome: \n");
                 scanf("%s", cliente.nome);
          
-                printf("Digite o novo CPF: \n");
+                printf("digite o novo Cpf: \n");
                 scanf("%s", cliente.cpf);
 
                 printf("Digite o novo RG: \n");
@@ -131,6 +129,7 @@ void atualizarCliente(FILE *file) {
          
                 printf("Digite o novo e-mail: \n");
                 scanf("%s", cliente.email);
+                
          
         // Atualizar o registro no arquivo
           // Volta para a posição antes da leitura do último registro
@@ -145,7 +144,7 @@ void atualizarCliente(FILE *file) {
     }
 }
 
-int main() {
+int menuCliente() {
     FILE *file = fopen("cliente.bin", "ab+");  // Abre ou cria o arquivo para leitura e escrita binária
 
     if (!file) {
