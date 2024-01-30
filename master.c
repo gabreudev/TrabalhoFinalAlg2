@@ -3,11 +3,10 @@
 double calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut);
 
 int gerarCodigo() {
-    // Inicializa a semente para o gerador de números aleatórios
+
     srand(time(NULL));
 
-    // Gera um número aleatório de 5 dígitos
-    int codigo = rand() % 90000 + 10000;  // Gera um número entre 10000 e 99999
+    int codigo = rand() % 90000 + 10000;  
 
     return codigo;
 }
@@ -19,17 +18,13 @@ int verificarNumero(FILE *file, int numero) {
     while (fread(&quarto, sizeof(Quarto), 1, file) == 1) {
         if(quarto.numero == numero) {
             printf("O número do Quarto informado consta no nosso registro de Quartos!\n");
-            if (quarto.status==Ocupado)
-            {
-                printf("o quarto escolhido está indisponivel no momento!");
-                return 0;
-            }
             
-            return 1;  // Número de quarto encontrado
+            
+            return 1;  
         }
     }
     printf("nenhum quarto está cadastrado com o numeor %d em nosso sistema. Tente novamente.\n", numero);
-    return 0;  // Número de quarto não encontrado
+    return 0;  
 }
 
 int verificarCpf(FILE *file, const char *cpf) {
@@ -39,11 +34,11 @@ int verificarCpf(FILE *file, const char *cpf) {
     while (fread(&cliente, sizeof(Cliente), 1, file) == 1) {
         if (strcmp(cliente.cpf, cpf) == 0) {
             printf("O CPF informado consta no nosso registro de clientes e está no nome de %s!\n", cliente.nome);
-            return 1;  // CPF encontrado
+            return 1; 
         }
     }
 
-    return 0;  // CPF não encontrado
+    return 0; 
 }
 
 void realizarReserva(FILE *file, Reserva reserva) {
@@ -96,7 +91,6 @@ void obterNovaReserva(FILE *file) {
     
     nova.codigo= gerarCodigo();
 
-    // Status e valor padrão
     nova.statusPagamento = Pendente;
     nova.valorTotal = 0.0;
     mudarStatusQuart(fileQuarto, nova.numeroQuarto, 2);
@@ -105,34 +99,37 @@ void obterNovaReserva(FILE *file) {
     fclose(fileCliente);
     fclose(fileQuarto);
     fclose(file);
-    
+    main();    
 }
-
-
-
-
-double calcularValorTotal(int numero, int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut){
+double calcularValorTotal(int numero, int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut) {
+    FILE *file = fopen("quarto.bin", "rb");
     Quarto quarto;
-    FILE *file = fopen("quarto.bin", "r+b");
-    double total;
-    int encontrado = 0;
+
+    double total = 0.0;
+    double precoDiaria = 0.0;
+
     rewind(file);
-    total = quarto.preco * 3 ;//calcularDiferenca(diaIn, mesIn, anoIn, diaOut, mesOut, anoOut);
+
     while (fread(&quarto, sizeof(Quarto), 1, file)) {
         if (quarto.numero == numero) {
-            encontrado = 1;
-            
-            printf("Check-in realizado com sucesso.\n");
+            precoDiaria = quarto.preco;
             break;
         }
     }
-    
-    if (!encontrado) {
-        printf("Reserva não encontrada.\n");
-    }
+
     fclose(file);
+
+    if (precoDiaria == 0.0) {
+        printf("Quarto não encontrado.\n");
+        return total;
+    }
+
+    double diferenca = //calcularDiferenca(diaIn, mesIn, anoIn, diaOut, mesOut, anoOut);
+    total = precoDiaria * diferenca;
+
     return total;
 }
+
 void realizarCheckIn(FILE *file) {
     Reserva reserva;
 
@@ -147,7 +144,7 @@ void realizarCheckIn(FILE *file) {
         if (reserva.numeroQuarto == numero) {
             encontrado = 1;
             mudarStatusQuart(fileQuarto, reserva.numeroQuarto, 1);
-            // Lógica para realizar o check-in, se necessário
+            
             printf("Check-in realizado com sucesso.\n");
             break;
         }
@@ -182,6 +179,7 @@ void realizarCheckOut(FILE *file) {
         printf("Reserva não encontrada.\n");
     }
     fclose(fileQuarto);
+    main();
 }
 void realizarPagamento(FILE *file, int numeroQuarto) {
     Reserva reserva;
@@ -206,7 +204,6 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
             reserva.statusPagamento = Pago;
             reserva.valorTotal = calcularValorTotal(reserva.numeroQuarto, reserva.diaIn, reserva.mesIn, reserva.anoIn, reserva.diaOut, reserva.mesOut, reserva.anoOut);
             printf("Pagamento  no valor de %.2f realizado com sucesso.\n", reserva.valorTotal);
-            fseek(file, -sizeof(Reserva), SEEK_CUR);
             fwrite(&reserva, sizeof(Reserva), 1, file);
             break;
         }
@@ -220,7 +217,7 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
 }
 
 void mudarStatusQuart(FILE *file, int numero, int status) {
-    rewind(file);  // Reposiciona o ponteiro no início do arquivo
+    rewind(file); 
 
     Quarto quarto;
     int encontrado = 0;
@@ -229,13 +226,12 @@ void mudarStatusQuart(FILE *file, int numero, int status) {
         if (quarto.numero == numero) {
             encontrado = 1;
 
-            // Reposiciona o ponteiro antes de escrever
             fseek(file, -sizeof(Quarto), SEEK_CUR);
             quarto.status = status;
             fwrite(&quarto, sizeof(Quarto), 1, file);
             printf("Status atualizado com sucesso.\n");
 
-            break;  // Não é necessário continuar a busca
+            break;  
         }
     }
 
@@ -279,7 +275,7 @@ void consultarReservas(FILE *file) {
         printf("codigo: %d\n", reserva.codigo);
         printf("Número do Quarto: %d\n", reserva.numeroQuarto);
         printf("CPF do Cliente: %s\n", reserva.cpfCliente);
-        printf("data de entrada: %d/%d/%d\n as %d:%d", reserva.diaIn,reserva.mesIn, reserva.anoIn, reserva.horaIn, reserva.minutoIn);
+        printf("data de entrada: %d/%d/%d\n as %d:%d\n", reserva.diaIn,reserva.mesIn, reserva.anoIn, reserva.horaIn, reserva.minutoIn);
         printf("data de saida: %d/%d/%d as %d:%d\n", reserva.diaOut,reserva.mesOut, reserva.anoOut, reserva.horaOut, reserva.horaOut);
         
         
@@ -297,7 +293,7 @@ void consultarReservas(FILE *file) {
 double calcularValoresRecebidos(FILE *file) {
     Reserva reserva;
     double valoresRecebidos = 0.0;
-
+    fseek(file, sizeof(Reserva), SEEK_SET);
     rewind(file);
 
     while (fread(&reserva, sizeof(Reserva), 1, file)) {
@@ -311,25 +307,21 @@ double calcularValoresRecebidos(FILE *file) {
 
 
 double calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut) {
-   struct tm datain = {0}; // data inicial
-   struct tm dataOut = {0}; // data final
+   struct tm datain = {0};
+   struct tm dataOut = {0}; 
    
-   // preenche as datas
-   datain.tm_year =  anoIn - 1900; // ano - 1900
-   datain.tm_mon = mesIn; // mês (0-11)
-   datain.tm_mday = diaIn; // dia
+   datain.tm_year =  anoIn - 1900; 
+   datain.tm_mon = mesIn; 
+   datain.tm_mday = diaIn; 
    dataOut.tm_year = anoOut - 1900;
    dataOut.tm_mon = mesOut;
    dataOut.tm_mday = diaOut;
    
-   // converte as datas para segundos
    time_t segundos1 = mktime(&datain);
    time_t segundos2 = mktime(&dataOut);
    
-   // calcula a diferença em segundos
    double diferenca = difftime(segundos2, segundos1);
    
-   // converte a diferença em dias
    double dias = diferenca / 86400;
    
    return dias;
@@ -369,8 +361,7 @@ int excluirReserva(FILE *file, int codigo) {
     return encontrado;
 }
 
-
-int menuReserva() {
+void menuReserva() {
     FILE *file = fopen("reserva.bin", "ab+");
 
     if (!file) {
@@ -385,26 +376,25 @@ int menuReserva() {
         printf("1 - Realizar Reserva\n");
         printf("2 - Excluir Reserva\n");
         printf("3 - Realizar Check-In\n");
-        printf("4 - excluir reserva\n");
-        printf("5 - Consultar Reservas\n");
-        printf("6 - Consultar Valores Recebidos\n");
-        printf("7 - Realizar Check-Out\n");
+        printf("4 - Consultar Reservas\n");  
+        printf("5 - Consultar Valores Recebidos\n");
+        printf("6 - Realizar Check-Out\n");
         printf("0 - Sair\n");
         printf("Escolha uma opção: ");
         scanf("%d", &opcao);
 
         switch (opcao) {
             case 1: {
-                // Lógica para preencher os detalhes da reserva
                 obterNovaReserva(file);
                 break;
             }
             case 2: {
                 int codigo;
-                printf("Digite o codigo d reserva a ser excluída: ");
+                printf("Digite o código da reserva a ser excluída: ");
                 scanf("%d", &codigo);
                 if (excluirReserva(file, codigo)) {
                     printf("Reserva excluída com sucesso.\n");
+                    main();
                 } else {
                     printf("Reserva não encontrada.\n");
                 }
@@ -415,21 +405,15 @@ int menuReserva() {
                 break;
             }
             case 4: {
-                int numeroQuartoPagamento;
-                printf("Digite o número do quarto para realizar o pagamento: ");
-                scanf("%d", &numeroQuartoPagamento);
-                realizarPagamento(file, numeroQuartoPagamento);
-                break;
-            }
-            case 5:
                 consultarReservas(file);
                 break;
-            case 6: {
+            }
+            case 5: {
                 double valoresRecebidos = calcularValoresRecebidos(file);
                 printf("Valores Recebidos: %.2f\n", valoresRecebidos);
                 break;
             }
-            case 7:{
+            case 6: {
                 realizarCheckOut(file);
                 break;
             }
@@ -444,7 +428,7 @@ int menuReserva() {
 
     fclose(file);
 
-    return 0;
+    main();
 }
 
 Quarto obterNovoQuarto() {
@@ -469,7 +453,8 @@ Quarto obterNovoQuarto() {
             break;
         default:
             printf("Tipo de quarto inválido. Usando Desconhecido.\n");
-            novo.tipoQuarto = -1;  // Valor inválido
+            novo.tipoQuarto = -1; 
+
     }
 
     return novo;
@@ -482,7 +467,7 @@ void cadastrarQuarto(FILE *file, Quarto quarto) {
 void listarQuartos(FILE *file) {
     Quarto quarto;
     int i = 0;
-    rewind(file);  // Posiciona o ponteiro no início do arquivo
+    rewind(file);  
 
     printf("Lista de Quartos:\n");
 
@@ -534,14 +519,14 @@ int apagarQuartoPorNumero(FILE *file, int numero) {
     }
 
      Quarto quarto;
-    // long posicaoAtual;
+    
 
     rewind(file);
 
     int encontrado = 0;
     int quant=0;
     while (fread(&quarto, sizeof(Quarto), 1, file)) {
-    // posicaoAtual = ftell(file);  // Salva a posição atual do ponteiro de arquivo
+    
 
     if (quarto.numero == numero) {
         printf("Quarto %d encontrado e apagado.\n", quarto.numero);
@@ -551,8 +536,7 @@ int apagarQuartoPorNumero(FILE *file, int numero) {
         fwrite(&quarto, sizeof(Quarto), 1, tempFile);
     }
 
-    // fseek(file, posicaoAtual, SEEK_SET);  // Reposiciona o ponteiro após a leitura
-}
+    }
 
 
     fclose(File);
@@ -577,18 +561,15 @@ void atualizarStatusQuarto(FILE *file) {
 
     Quarto quarto;
 
-    // Posiciona o ponteiro de arquivo no registro desejado
+    
     fseek(file, indice * sizeof(Quarto), SEEK_SET);
     
-    // Lê as informações do quarto do arquivo
     fread(&quarto, sizeof(Quarto), 1, file);
 
     printf("Número: %d\n", quarto.numero);
     printf("Preço: %.2f\n", quarto.preco);
 
-    // Restante da impressão ...
 
-    // Menu para escolher o novo status
     printf("\nEscolha o novo status:\n");
     printf("1 - Livre\n");
     printf("2 - Ocupado\n");
@@ -611,10 +592,8 @@ void atualizarStatusQuarto(FILE *file) {
             printf("Opção inválida. O status permanecerá inalterado.\n");
     }
 
-    // Posiciona o ponteiro de arquivo no início do registro a ser atualizado
     fseek(file, indice * sizeof(Quarto), SEEK_SET);
 
-    // Escreve as informações atualizadas de volta no arquivo
     fwrite(&quarto, sizeof(Quarto), 1, file);
     fclose(file);
     file = fopen("quarto.bin", "ab+");
@@ -624,7 +603,7 @@ void atualizarStatusQuarto(FILE *file) {
     
  
 int menuQuarto() {
-    FILE *file = fopen("quarto.bin", "a+b");  // Abre ou cria o arquivo para leitura e escrita binária
+    FILE *file = fopen("quarto.bin", "a+b");  
     
     if (!file) {
         printf("Erro ao abrir o arquivo.\n");
@@ -659,6 +638,7 @@ int menuQuarto() {
 
                 if (apagarQuartoPorNumero(file, numero)) {
                     printf("Quarto apagado com sucesso.\n");
+                    main();
                 } else {
                     printf("Quarto não encontrado.\n");
                 }
@@ -696,14 +676,18 @@ Cliente obterNovoCliente() {
     scanf("%s", novo.telefone);
 
     printf("Digite o endereço do cliente: ");
-    scanf("%s", novo.endereco);
+    getchar(); 
+    fgets(novo.endereco, sizeof(novo.endereco), stdin);
+    novo.endereco[strcspn(novo.endereco, "\n")] = '\0'; 
 
     printf("Digite o e-mail do cliente: ");
     scanf("%s", novo.email);
 
     printf("Digite o nome do cliente: ");
-    scanf("%s", novo.nome);
-    // Lê a linha inteira, incluindo espaços
+    getchar(); 
+    fgets(novo.nome, sizeof(novo.nome), stdin);
+    novo.nome[strcspn(novo.nome, "\n")] = '\0'; 
+
     return novo;
 }
 
@@ -715,7 +699,7 @@ void cadastrarCliente(FILE *file, Cliente cliente) {
 void listarClientes(FILE *file) {
     Cliente cliente;
     int indice=0;
-    rewind(file);  // Posiciona o ponteiro no início do arquivo
+    rewind(file);  
 
     printf("Lista de Clientes:\n");
 
@@ -743,14 +727,12 @@ if (!tempFile) {
 }
 
 Cliente cliente;
-// long posicaoAtual;
 
-rewind(File);  // Alterei para rewind(File) para corresponder ao arquivo de clientes
+rewind(File); 
 
 int encontrado = 0;
 
 while (fread(&cliente, sizeof(cliente), 1, File)) {
-    // posicaoAtual = ftell(File);  // Salva a posição atual do ponteiro de arquivo
 
     if (strcmp(cliente.cpf, cpf) == 0) {
         printf("Usuário do CPF %s encontrado e apagado.\n", cliente.cpf);
@@ -760,13 +742,12 @@ while (fread(&cliente, sizeof(cliente), 1, File)) {
         fwrite(&cliente, sizeof(Cliente), 1, tempFile);
     }
 
-    // fseek(File, posicaoAtual, SEEK_SET);  // Reposiciona o ponteiro após a leitura
 }
 
 fclose(File);
 fclose(tempFile);
 
-remove("cliente.bin");  // Alterei para o nome correto do arquivo de clientes
+remove("cliente.bin");  
 rename("temp.bin", "cliente.bin");
 
 return encontrado;
@@ -784,45 +765,34 @@ void atualizarCliente(FILE *file) {
     printf("Digite o indice do cliente que deseja atualizar: ");
     scanf("%d", &indice);
     fseek(file, indice*sizeof(Cliente), SEEK_SET);
-    //fread(&aux, sizeof(Cliente), 1, file);   
     int encontrado = 0;
-    
              encontrado = 1; 
-
     if (encontrado) {
-        // printf("Cliente encontrado:\n");
-        // printf("Nome: %s\n", aux.nome);
-        // printf("CPF: %s\n", aux.cpf);
-        // printf("RG: %s\n", aux.rg);
-        // printf("Telefone: %s\n", aux.telefone);
-        // printf("Endereço: %s\n", aux.endereco);
-        // printf("E-mail: %s\n", aux.email);
          Cliente cliente;
-        // Menu para escolher o que deseja atualizar4
         printf("\n modifique o usuario:\n");
         
-        
-                printf("Digite o novo nome: \n");
-                scanf("%s", cliente.nome);
-         
-                printf("digite o novo Cpf: \n");
-                scanf("%s", cliente.cpf);
+        printf("Digite o CPF do cliente: ");
+        scanf("%s", cliente.cpf);
 
-                printf("Digite o novo RG: \n");
-                scanf("%s", cliente.rg);
-         
-                printf("Digite o novo telefone: \n");
-                scanf("%s", cliente.telefone);
-         
-                printf("Digite o novo endereço: \n");
-                scanf("%s", cliente.endereco);
-         
-                printf("Digite o novo e-mail: \n");
-                scanf("%s", cliente.email);
-                
-         
-        // Atualizar o registro no arquivo
-          // Volta para a posição antes da leitura do último registro
+        printf("Digite o RG do cliente: ");
+        scanf("%s", cliente.rg);
+
+        printf("Digite o novo telefone do cliente: ");
+        scanf("%s", cliente.telefone);
+
+        printf("Digite o novo endereço do cliente: ");
+        getchar(); 
+        fgets(cliente.endereco, sizeof(cliente.endereco), stdin);
+        cliente.endereco[strcspn(cliente.endereco, "\n")] = '\0'; 
+
+        printf("Digite o novo e-mail do cliente: ");
+        scanf("%s", cliente.email);
+
+        printf("Digite o novo nome do cliente: ");
+        getchar(); 
+        fgets(cliente.nome, sizeof(cliente.nome), stdin);
+        cliente.nome[strcspn(cliente.nome, "\n")] = '\0'; 
+
         fwrite(&cliente, sizeof(Cliente), 1, file);
         printf("Informação atualizada com sucesso.\n");
 
@@ -835,8 +805,7 @@ void atualizarCliente(FILE *file) {
 }
 
 int menuCliente() {
-    FILE *file = fopen("cliente.bin", "ab+");  // Abre ou cria o arquivo para leitura e escrita binária
-
+    FILE *file = fopen("cliente.bin", "ab+");  
     if (!file) {
         printf("Erro ao abrir o arquivo.\n");
         
@@ -887,7 +856,7 @@ int menuCliente() {
 
     } while (opcao != 0);
 
-    fclose(file);  // Fecha o arquivo
+    fclose(file);  
     return 0;
     
 }

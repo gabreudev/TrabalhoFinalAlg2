@@ -82,7 +82,7 @@ void mudarStatusQuarto(FILE *file, int numeroQuarto, enum Status status);
 void RegistraHoraSaida(FILE *file, int numeroQuarto);
 void consultarReservas(FILE *file);
 double calcularValoresRecebidos(FILE *file);
-int menuReserva();
+void menuReserva();
 /////////////////////
 
 
