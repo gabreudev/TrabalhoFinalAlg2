@@ -1,4 +1,101 @@
-#include "enum.h"
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+////////////////////
+enum TipoQuarto {
+    Simples,
+    Duplo,
+    Suite
+};
+
+enum Status {
+    Livre,
+    Ocupado,
+    Reservado
+};
+
+enum StatusPagamento {
+    Pendente,
+    Pago
+};
+
+typedef struct {
+    int numero;
+    float preco;
+    enum TipoQuarto tipoQuarto;
+    enum Status status;
+} Quarto;
+
+typedef struct {
+    char nome[30];
+    char cpf[12];
+    char rg[20];
+    char telefone[15];
+    char endereco[15];
+    char email[20];
+} Cliente;
+
+typedef struct{
+    int codigo;
+    int numeroQuarto;
+    char cpfCliente[20];
+    int horaIn;
+    int minutoIn;
+    int diaIn;
+    int mesIn;
+    int anoIn;
+    int horaOut;
+    int minutoOut;
+    int diaOut;
+    int mesOut;
+    int anoOut;
+    double valorTotal;
+    enum StatusPagamento statusPagamento;
+} Reserva;
+//////////////
+void atualizarCliente(FILE *file);
+
+int apagarClientePorCpf(FILE *file, char cpf[]);
+
+Cliente obterNovoCliente();
+
+void cadastrarCliente(FILE *file, Cliente cliente);
+
+void listarClientes(FILE *file);
+
+int menuCliente();
+
+////////////////////
+
+double calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut);
+int verificarNumero(FILE *file, int numero);
+int verificarCpf(FILE *file, const char *cpf);
+void realizarReserva(FILE *file, Reserva reserva);
+void obterNovaReserva(FILE *file);
+double calcularValorTotal(int numero, int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut);
+void realizarCheckIn(FILE *file);
+void realizarCheckOut(FILE *file);
+void realizarPagamento(FILE *file, int numeroQuarto);
+void RegistraHoraSaida(FILE *file, int numeroQuarto);
+void consultarReservas(FILE *file);
+double calcularValoresRecebidos(FILE *file);
+void menuReserva();
+/////////////////////
+
+
+Quarto obterNovoQuarto();
+
+void cadastrarQuarto(FILE *file, Quarto quarto);
+
+void listarQuartos(FILE *file);
+
+int apagarQuartoPorNumero(FILE *file, int numero);
+
+void atualizarStatusQuarto(FILE *file);
+
+int menuQuarto();
 
 double calcularDiferenca(int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut);
 
@@ -44,6 +141,7 @@ int verificarCpf(FILE *file, const char *cpf) {
 void realizarReserva(FILE *file, Reserva reserva) {
     fwrite(&reserva, sizeof(Reserva), 1, file);
     printf("Reserva realizada com sucesso.\n");
+    //main();
 }
 
 void obterNovaReserva(FILE *file) {
@@ -99,7 +197,7 @@ void obterNovaReserva(FILE *file) {
     fclose(fileCliente);
     fclose(fileQuarto);
     fclose(file);
-    main();    
+    main();
 }
 double calcularValorTotal(int numero, int diaIn, int mesIn, int anoIn, int diaOut, int mesOut, int anoOut) {
     FILE *file = fopen("quarto.bin", "rb");
@@ -145,7 +243,7 @@ void realizarCheckIn(FILE *file) {
             encontrado = 1;
             mudarStatusQuart(fileQuarto, reserva.numeroQuarto, 1);
             
-            printf("Check-in realizado com sucesso.\n");
+            printf("Check-in realizado com sucesso.\n agora o quarto esta oficialmente ocupado\n");
             break;
         }
     }
@@ -159,6 +257,7 @@ void realizarCheckOut(FILE *file) {
     Reserva reserva;
 
     int numero;
+    listarQuartos;
     printf("digite o numero do quarto para realizar o check-out: ");
     scanf("%d", &numero);
     int encontrado = 0;
@@ -168,9 +267,9 @@ void realizarCheckOut(FILE *file) {
     while (fread(&reserva, sizeof(Reserva), 1, file)) {
         if (reserva.numeroQuarto == numero) {
             encontrado = 1;
-            mudarStatusQuart(fileQuarto, reserva.numeroQuarto, 1);
             realizarPagamento(file, reserva.numeroQuarto);
-            printf("Check-in realizado com sucesso.\n");
+            mudarStatusQuart(fileQuarto, reserva.numeroQuarto, 1);
+            printf("Checkout realizado com sucesso. O quarto agora esta Livre\n");
             break;
         }
     }
@@ -179,7 +278,7 @@ void realizarCheckOut(FILE *file) {
         printf("Reserva não encontrada.\n");
     }
     fclose(fileQuarto);
-    main();
+   // main();
 }
 void realizarPagamento(FILE *file, int numeroQuarto) {
     Reserva reserva;
@@ -190,7 +289,8 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
     int encontrado = 0;
     int codigo;
     
-    printf("digite o codigo da reserva: ");
+    consultarReservas(file);
+    printf("\ndigite o codigo da reserva: ");
     scanf("%d", &codigo);
     
     
@@ -200,7 +300,6 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
         if (reserva.codigo == codigo) {
             encontrado = 1;
             mudarStatusQuart(fileQuarto, reserva.numeroQuarto, 0);
-            RegistraHoraSaida(file, reserva.numeroQuarto);
             reserva.statusPagamento = Pago;
             reserva.valorTotal = calcularValorTotal(reserva.numeroQuarto, reserva.diaIn, reserva.mesIn, reserva.anoIn, reserva.diaOut, reserva.mesOut, reserva.anoOut);
             printf("Pagamento  no valor de %.2f realizado com sucesso.\n", reserva.valorTotal);
@@ -215,23 +314,22 @@ void realizarPagamento(FILE *file, int numeroQuarto) {
         fclose(file);
         file = fopen("reserva.bin", "ab+");
 }
-
-void mudarStatusQuart(FILE *file, int numero, int status) {
-    rewind(file); 
+void mudarStatusQuart(FILE *file, int numero, int novoStatus) {
+    rewind(file);
 
     Quarto quarto;
     int encontrado = 0;
 
-    while (fread(&quarto, sizeof(Quarto), 1, file)) {
+    while (fread(&quarto, sizeof(Quarto), 1, file) == 1) {
         if (quarto.numero == numero) {
             encontrado = 1;
+            quarto.status = novoStatus;
 
             fseek(file, -sizeof(Quarto), SEEK_CUR);
-            quarto.status = status;
             fwrite(&quarto, sizeof(Quarto), 1, file);
             printf("Status atualizado com sucesso.\n");
 
-            break;  
+            break;
         }
     }
 
@@ -372,7 +470,7 @@ void menuReserva() {
     int opcao;
 
     do {
-        printf("Menu:\n");
+        printf("=-=-=Menu de Reservas=-=-=\n");
         printf("1 - Realizar Reserva\n");
         printf("2 - Excluir Reserva\n");
         printf("3 - Realizar Check-In\n");
@@ -418,7 +516,7 @@ void menuReserva() {
                 break;
             }
             case 0:
-                printf("Saindo do programa.\n");
+                printf("Voltando..\n");
                 break;
             default:
                 printf("Opção inválida. Tente novamente.\n");
@@ -613,7 +711,7 @@ int menuQuarto() {
     int opcao;
 
     do {
-        printf("Menu:\n");
+        printf("=-=-=Menu de Quarto=-=-=\n");
         printf("1 - Cadastrar Quarto\n");
         printf("2 - Listar Quartos\n");
         printf("3 - Apagar Quarto por Número\n");
@@ -648,7 +746,7 @@ int menuQuarto() {
                 atualizarStatusQuarto(file);
                 break;
             case 0:
-                printf("Saindo do programa.\n");
+                printf("Voltando..\n");
                 break;
             default:
                 printf("Opção inválida. Tente novamente.\n");
@@ -814,7 +912,7 @@ int menuCliente() {
     int opcao;
 
     do {
-        printf("Menu:\n");
+        printf("=-=-=Menu Cliente=-=-=\n");
         printf("1 - Cadastrar Cliente\n");
         printf("2 - Listar Clientes\n");
         printf("3 - Apagar Cliente por CPF\n");
@@ -828,6 +926,7 @@ int menuCliente() {
                 Cliente novo = obterNovoCliente();
                 cadastrarCliente(file, novo);
                 break;
+                main();
             }
             case 2:
                 listarClientes(file);
@@ -839,6 +938,7 @@ int menuCliente() {
 
                 if (apagarClientePorCpf(file, cpf)) {
                     printf("Cliente apagado com sucesso.\n");
+                    main();
                 } else {
                     printf("Cliente não encontrado.\n");
                 }
@@ -848,7 +948,7 @@ int menuCliente() {
                 atualizarCliente(file);
                 break;
             case 0:
-                printf("Saindo do programa.\n");
+                printf("Voltando.\n");
                 break;
             default:
                 printf("Opção inválida. Tente novamente.\n");
@@ -867,7 +967,7 @@ int main() {
     int opcao;
 
     do {
-        printf("Menu:\n");
+        printf("=-=-=Menu principal=-=-=\n");
         printf("1 - Opcoes de Quarto\n");
         printf("2 - Opcoes do Cliente\n");
         printf("3 - Opcoes de reserva\n");
